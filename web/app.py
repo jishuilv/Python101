@@ -3,7 +3,10 @@
 import sys
 import os
 
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+project_root = os.path.dirname(os.path.dirname(__file__))
+sys.path.insert(0, project_root)
+src_dir = os.path.join(project_root, 'src')
+sys.path.insert(0, src_dir)
 
 import torch
 from flask import Flask, render_template, jsonify
@@ -11,8 +14,8 @@ import base64
 from io import BytesIO
 from PIL import Image
 
-from src.config import Config
-from src.utils import load_model, load_mnist_datasets
+from config import Config
+from utils import load_model, load_mnist_datasets
 
 app = Flask(__name__)
 
