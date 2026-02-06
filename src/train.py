@@ -4,19 +4,8 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import torchvision
 from torchvision import transforms
-
-class FNN(nn.Module):
-    def __init__(self, input_size, hidden_size, num_classes):
-        super(FNN, self).__init__()
-        self.fc1 = nn.Linear(input_size, hidden_size)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(hidden_size, num_classes)
-    
-    def forward(self, x):
-        out = self.fc1(x)
-        out = self.relu(out)
-        out = self.fc2(out)
-        return out
+from model import FNN
+import os
 
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -34,15 +23,19 @@ def main():
         transforms.Normalize((0.1307,), (0.3081,))
     ])
 
+    data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
+    model_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'models')
+    os.makedirs(model_dir, exist_ok=True)
+
     train_dataset = torchvision.datasets.MNIST(
-        root='dataset',
+        root=data_dir,
         train=True,
         transform=transform,
         download=True
     )
 
     test_dataset = torchvision.datasets.MNIST(
-        root='dataset',
+        root=data_dir,
         train=False,
         transform=transform,
         download=True
@@ -94,8 +87,9 @@ def main():
 
         print(f'Test Accuracy of the model on the 10000 test images: {100 * correct / total:.2f} %')
 
-    torch.save(model.state_dict(), 'fnn_mnist.pth')
-    print('Model saved as fnn_mnist.pth')
+    model_path = os.path.join(model_dir, 'fnn_mnist.pth')
+    torch.save(model.state_dict(), model_path)
+    print(f'Model saved as {model_path}')
 
 if __name__ == '__main__':
     main()

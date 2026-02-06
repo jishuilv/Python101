@@ -20,19 +20,24 @@
 pip install torch torchvision flask pillow
 ```
 
-## 文件结构
+## 项目结构
 
 ```
 Python101/
-├── FNN.py              # 训练脚本
-├── inference.py        # 命令行推理脚本
-├── app.py              # Web应用后端
-├── templates/
-│   └── index.html      # Web界面前端
-├── README.md           # 项目说明文档
-├── fnn_mnist.pth       # 训练好的模型权重
-└── dataset/
-    └── MNIST/          # MNIST数据集（自动下载）
+├── src/                    # 源代码目录
+│   ├── __init__.py
+│   ├── model.py            # 模型定义
+│   ├── train.py            # 训练脚本
+│   └── inference.py        # 命令行推理脚本
+├── web/                    # Web应用目录
+│   ├── app.py             # Flask后端
+│   └── templates/
+│       └── index.html      # Web界面前端
+├── models/                 # 保存的模型
+│   └── fnn_mnist.pth
+├── data/                   # 数据集
+│   └── MNIST/
+└── README.md
 ```
 
 ## 快速开始
@@ -40,7 +45,8 @@ Python101/
 ### 1. 训练模型
 
 ```bash
-python FNN.py
+cd src
+python train.py
 ```
 
 这会：
@@ -48,11 +54,12 @@ python FNN.py
 - 训练5个epoch
 - 显示训练过程和损失值
 - 计算测试准确率
-- 保存模型为 `fnn_mnist.pth`
+- 保存模型到 `models/fnn_mnist.pth`
 
 ### 2. 命令行验证模型
 
 ```bash
+cd src
 python inference.py
 ```
 
@@ -66,6 +73,7 @@ python inference.py
 启动Web应用：
 
 ```bash
+cd web
 python app.py
 ```
 
@@ -98,13 +106,17 @@ python app.py
 
 ## 使用模型
 
-训练完成后，模型权重会保存为 `fnn_mnist.pth`，可以使用以下方式加载：
+训练完成后，模型权重会保存为 `models/fnn_mnist.pth`，可以使用以下方式加载：
 
 ```python
 import torch
-from FNN import FNN
+import sys
+import os
+
+sys.path.append(os.path.dirname(__file__))
+from src.model import FNN
 
 model = FNN(input_size=784, hidden_size=500, num_classes=10)
-model.load_state_dict(torch.load('fnn_mnist.pth'))
+model.load_state_dict(torch.load('models/fnn_mnist.pth'))
 model.eval()
 ```

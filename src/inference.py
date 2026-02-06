@@ -1,9 +1,16 @@
 import torch
 import torchvision
 from torchvision import transforms
-from FNN import FNN
+import sys
+import os
 
-def load_model(model_path='fnn_mnist.pth'):
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from src.model import FNN
+
+def load_model(model_path=None):
+    if model_path is None:
+        model_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'models', 'fnn_mnist.pth')
+    
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = FNN(input_size=784, hidden_size=500, num_classes=10).to(device)
     model.load_state_dict(torch.load(model_path, map_location=device))
@@ -16,8 +23,9 @@ def show_sample_predictions(model, device, num_samples=10):
         transforms.Normalize((0.1307,), (0.3081,))
     ])
     
+    data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
     test_dataset = torchvision.datasets.MNIST(
-        root='dataset',
+        root=data_dir,
         train=False,
         transform=transform,
         download=True
@@ -54,8 +62,9 @@ def calculate_accuracy(model, device):
         transforms.Normalize((0.1307,), (0.3081,))
     ])
     
+    data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
     test_dataset = torchvision.datasets.MNIST(
-        root='dataset',
+        root=data_dir,
         train=False,
         transform=transform,
         download=True
