@@ -1,35 +1,60 @@
+"""命令行推理脚本 - 验证模型能力"""
+
 import torch
-import torchvision
-from torchvision import transforms
-import sys
-import os
 
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-from src.model import FNN
+from config import Config
+from utils import (
+    get_device,
+    load_mnist_datasets,
+    create_dataloaders,
+    load_model
+)
 
-def load_model(model_path=None):
-    if model_path is None:
-        model_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'models', 'fnn_mnist.pth')
+
+def calculate_accuracy(model, device) -> float:
+    """
+    计算模型在测试集上的准确率
     
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = FNN(input_size=784, hidden_size=500, num_classes=10).to(device)
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    Args:
+        model: 神经网络模型
+        device: 计算设备
+    
+    Returns:
+        准确率（百分比）
+    """
+    _, test_dataset = load_mnist_datasets()
+    _, test_loader = create_dataloaders(test_dataset, test_dataset)
+    
     model.eval()
-    return model, device
-
-def show_sample_predictions(model, device, num_samples=10):
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
+    correct = 0
+    total = 0
     
-    data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
-    test_dataset = torchvision.datasets.MNIST(
-        root=data_dir,
-        train=False,
-        transform=transform,
-        download=True
-    )
+    with torch.no_grad():
+        for images, labels in test_loader:
+            images = images.reshape(-1, Config.model.input_size).to(device)
+            labels = labels.to(device)
+            outputs = model(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+    
+    accuracy = 100 * correct / total
+    return accuracy
+
+
+def show_sample_predictions(model, device, num_samples: int = 10) -> float:
+    """
+    展示随机样本的预测结果
+    
+    Args:
+        model: 神经网络模型
+        device: 计算设备
+        num_samples: 展示的样本数量
+    
+    Returns:
+        抽样准确率（百分比）
+    """
+    _, test_dataset = load_mnist_datasets()
     
     indices = torch.randperm(len(test_dataset))[:num_samples]
     
@@ -41,7 +66,7 @@ def show_sample_predictions(model, device, num_samples=10):
         image, label = test_dataset[idx]
         
         with torch.no_grad():
-            image_flat = image.reshape(-1, 784).to(device)
+            image_flat = image.reshape(-1, Config.model.input_size).to(device)
             output = model(image_flat)
             _, predicted = torch.max(output.data, 1)
             prediction = predicted.item()
@@ -54,50 +79,31 @@ def show_sample_predictions(model, device, num_samples=10):
         print(f'样本 {i + 1}: 真实值 = {label}, 预测值 = {prediction}  [{status}]')
     
     print('-' * 50)
-    print(f'本次抽样准确率: {100 * correct_count / num_samples:.2f}%')
+    sample_accuracy = 100 * correct_count / num_samples
+    print(f'本次抽样准确率: {sample_accuracy:.2f}%')
+    
+    return sample_accuracy
 
-def calculate_accuracy(model, device):
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
-    
-    data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
-    test_dataset = torchvision.datasets.MNIST(
-        root=data_dir,
-        train=False,
-        transform=transform,
-        download=True
-    )
-    
-    from torch.utils.data import DataLoader
-    test_loader = DataLoader(dataset=test_dataset, batch_size=100, shuffle=False)
-    
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for images, labels in test_loader:
-            images = images.reshape(-1, 784).to(device)
-            labels = labels.to(device)
-            outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-    
-    accuracy = 100 * correct / total
-    print(f'\n模型在10000张测试图像上的准确率: {accuracy:.2f}%')
-    return accuracy
 
-def main():
+def main() -> None:
+    """主推理函数"""
     print('正在加载训练好的模型...')
-    model, device = load_model()
+    try:
+        model, device = load_model()
+    except FileNotFoundError as e:
+        print(f'错误: {e}')
+        print('请先运行 train.py 训练模型')
+        return
+    
     print(f'使用设备: {device}')
     
     print('\n=== 计算整体准确率 ===')
-    calculate_accuracy(model, device)
+    accuracy = calculate_accuracy(model, device)
+    print(f'模型在10000张测试图像上的准确率: {accuracy:.2f}%')
     
     print('\n=== 展示样本预测 ===')
     show_sample_predictions(model, device, num_samples=15)
+
 
 if __name__ == '__main__':
     main()

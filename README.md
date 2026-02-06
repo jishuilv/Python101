@@ -13,11 +13,12 @@
 - torchvision
 - Flask
 - Pillow
+- pytest (可选，用于运行测试)
 
 ## 安装依赖
 
 ```bash
-pip install torch torchvision flask pillow
+pip install torch torchvision flask pillow pytest
 ```
 
 ## 项目结构
@@ -26,18 +27,25 @@ pip install torch torchvision flask pillow
 Python101/
 ├── src/                    # 源代码目录
 │   ├── __init__.py
-│   ├── model.py            # 模型定义
-│   ├── train.py            # 训练脚本
-│   └── inference.py        # 命令行推理脚本
+│   ├── config.py          # 配置管理模块
+│   ├── model.py           # 模型定义
+│   ├── utils.py           # 工具类模块
+│   ├── train.py           # 训练脚本
+│   └── inference.py       # 命令行推理脚本
 ├── web/                    # Web应用目录
 │   ├── app.py             # Flask后端
 │   └── templates/
 │       └── index.html      # Web界面前端
+├── tests/                  # 单元测试
+│   ├── __init__.py
+│   ├── test_config.py     # 配置模块测试
+│   └── test_model.py      # 模型测试
 ├── models/                 # 保存的模型
 │   └── fnn_mnist.pth
 ├── data/                   # 数据集
 │   └── MNIST/
-└── README.md
+├── README.md               # 项目说明
+└── CODE_REVIEW.md          # 代码审查报告
 ```
 
 ## 快速开始
@@ -86,6 +94,38 @@ python app.py
 - 📊 显示本次抽样准确率统计
 - 🔄 点击按钮加载新的随机样本
 
+### 4. 运行单元测试
+
+```bash
+pytest tests/ -v
+```
+
+## 代码质量
+
+本项目已通过全面的代码审查，改进包括：
+
+✅ **代码规范与可读性**
+- 遵循单一职责原则
+- 完整的文档字符串
+- 消除魔法数字
+
+✅ **设计模式与架构**
+- 遵循DRY原则
+- 配置与逻辑分离
+- 统一的工具接口
+
+✅ **健壮性与测试**
+- 完善的错误处理
+- 安全的模型加载
+- 核心模块单元测试
+
+✅ **性能与安全**
+- 懒加载模式
+- 可配置的debug模式
+- 安全的路径处理
+
+详细的审查报告请查看：`CODE_REVIEW.md`
+
 ## 模型架构
 
 - **输入层**: 784个神经元（28×28像素展平）
@@ -115,8 +155,13 @@ import os
 
 sys.path.append(os.path.dirname(__file__))
 from src.model import FNN
+from src.utils import load_model
 
+# 方式1：使用utils模块
+model, device = load_model()
+
+# 方式2：手动加载
 model = FNN(input_size=784, hidden_size=500, num_classes=10)
-model.load_state_dict(torch.load('models/fnn_mnist.pth'))
+model.load_state_dict(torch.load('models/fnn_mnist.pth', weights_only=True))
 model.eval()
 ```
