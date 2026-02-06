@@ -4,18 +4,20 @@
 
 ## 项目概述
 
-本项目使用PyTorch构建一个简单的前馈神经网络，用于识别MNIST数据集中的手写数字（0-9）。
+本项目使用PyTorch构建一个简单的前馈神经网络，用于识别MNIST数据集中的手写数字（0-9）。提供了三种验证方式：命令行推理、可视化Web界面。
 
 ## 环境要求
 
 - Python 3.x
 - PyTorch
 - torchvision
+- Flask
+- Pillow
 
 ## 安装依赖
 
 ```bash
-pip install torch torchvision
+pip install torch torchvision flask pillow
 ```
 
 ## 文件结构
@@ -23,7 +25,10 @@ pip install torch torchvision
 ```
 Python101/
 ├── FNN.py              # 训练脚本
-├── inference.py        # 推理/验证脚本
+├── inference.py        # 命令行推理脚本
+├── app.py              # Web应用后端
+├── templates/
+│   └── index.html      # Web界面前端
 ├── README.md           # 项目说明文档
 ├── fnn_mnist.pth       # 训练好的模型权重
 └── dataset/
@@ -45,7 +50,7 @@ python FNN.py
 - 计算测试准确率
 - 保存模型为 `fnn_mnist.pth`
 
-### 2. 验证模型能力
+### 2. 命令行验证模型
 
 ```bash
 python inference.py
@@ -55,6 +60,23 @@ python inference.py
 - 加载已训练好的模型
 - 计算整体准确率
 - 随机选择15个样本展示预测结果
+
+### 3. 可视化Web界面（推荐）⭐
+
+启动Web应用：
+
+```bash
+python app.py
+```
+
+然后在浏览器中打开：http://localhost:5000
+
+**Web界面功能：**
+- 🖼️ 直观展示手写数字原始图像
+- ✅ 同时显示真实值和预测值
+- 🎨 用颜色区分正确/错误识别
+- 📊 显示本次抽样准确率统计
+- 🔄 点击按钮加载新的随机样本
 
 ## 模型架构
 
